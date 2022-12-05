@@ -1,0 +1,83 @@
+<script src="/socket.io/socket.io.js"></script>
+
+<script src="http://code.jquery.com/jquery-2.0.0.min.js"></script>
+
+<form onsubmit="return sendMessage();">
+    <input id="message" placeholder="Enter message">
+    <input type="submit" value="Send">
+</form>
+     
+<ul id="messages"></ul>
+
+<script>
+    var server = "http://localhost:3000";
+    var io = io(server);
+    
+</script>
+<script>
+     function deleteMessage(self) {
+    // get message id
+    var id = self.getAttribute("data-id");
+ 
+    // send event to server
+    io.emit("delete_message", id);
+}
+function sendMessage() {
+    // get message
+    var message = document.getElementById("message");
+ 
+     // sending message from client
+    io.emit("new_message", message.value);
+ 
+    // this will prevent the form from submitting
+    return false;
+}
+
+// client will listen from server
+io.on("new_message", function (data) {
+ 
+    // display message
+    console.log("Server says", data);
+     
+    // creates a new DOM element for li tag
+    var li = document.createElement("li");
+ 
+    // show message in li item
+    li.innerHTML = data.message;
+ 
+    // append the message at the end of list
+    var messages = document.getElementById("messages");
+    messages.appendChild(li);
+});
+// attach listener on client
+io.on("delete_message", function (id) {
+    // get node by id
+    var node = document.getElementById("message-" + id);
+    node.innerHTML = "This message has been deleted";
+});
+$.ajax({
+    url: server + "/get_messages",
+    method: "GET",
+    success: function (response) {
+        console.log(response);
+ 
+        var messages = document.getElementById("messages");
+ 
+        // parse JSON to javascript object
+        var data = JSON.parse(response);
+        for (var a = 0; a < data.length; a++) {
+            // creates new DOM element
+            var li = document.createElement("li");
+// give it unique id
+li.id = "message-" + data[a].id;
+ 
+li.innerHTML = data[a].message;
+ 
+// add delete button
+li.innerHTML += "<button data-id='" + data[a].id + "' onclick='deleteMessage(this);'>Delete</button>";
+            // append at the end of list
+            messages.appendChild(li);
+        }
+    }
+});
+</script>
